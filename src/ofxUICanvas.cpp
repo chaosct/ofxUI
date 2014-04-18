@@ -972,59 +972,51 @@ void ofxUICanvas::removeWidget(ofxUIWidget *widget)
     if(widget->isModal())
     {
         map<string, ofxUIWidget*>::iterator it;
-        it=widgetsAreModal.find(widget->getName());
-        
-        if(it != widgetsAreModal.end())
+        for(it = widgetsAreModal.begin(); it != widgetsAreModal.end(); ++it)
         {
-            widgetsAreModal.erase(it);
+            if (it->second == widget)
+            {
+                widgetsAreModal.erase(it);
+                break;
+            }    
         }
     }
     
     //for the map
     multimap<string, ofxUIWidget*>::iterator it;
-    it=widgets_map.find(widget->getName());
-    if(it != widgets_map.end())
+    //it=widgets_map.find(widget->getName());
+    for(it = widgets_map.begin(); it != widgets_map.end(); ++it)
     {
         //            cout << "FOUND IT IN MAP, DELETING" << endl;
-        widgets_map.erase(it);
+        if (it->second == widget)
+        {
+            widgets_map.erase(it);
+            break;
+        }
     }
     
     //for the widgets with state
-    for(unsigned int i = 0; i < widgetsWithState.size(); i++)
-    {
-        ofxUIWidget *other = widgetsWithState[i];
-        if(widget->getName() == other->getName())
-        {
-            //                cout << "FOUND IT IN WIDGETS WITH STATE, DELETING" << endl;
-            widgetsWithState.erase(widgetsWithState.begin()+i);
-            break;
-        }
-    }
-    vector<ofxUIWidget *>::iterator wit;
+    widgetsWithState.erase( std::remove( widgetsWithState.begin(), widgetsWithState.end(), widget ), widgetsWithState.end() );
     //for all the widgets
-    for(wit=widgets.begin(); wit != widgets.end(); wit++)
-    {
-        ofxUIWidget *other = *wit;
-        //            cout << other->getName() << endl;
-        if(widget->getName() == other->getName())
-        {
-            //                cout << "FOUND IT\t" << other->getName() << " " << widget->getName() << endl;
-            widgets.erase(wit);
-            break;
-        }
-    }
-    
+    widgets.erase( std::remove( widgets.begin(), widgets.end(), widget ), widgets.end() );
+
+    ofxUIWidget * labelignore = NULL;
     if(widget->hasLabel())
     {
         //            cout << "HAS LABEL" << endl;
         ofxUIWidgetWithLabel *wwl = (ofxUIWidgetWithLabel *) widget;
         ofxUILabel *label = wwl->getLabelWidget();
+        labelignore = label;
         removeWidget(label);
     }
     
-    for(int i = 0; i < widget->getEmbeddedWidgetsSize(); i++)
+    for(int i = 0; i < widget->getEmbeddedWidgetsSize() ; i++)
     {
-        removeWidget(widget->getEmbeddedWidget(i));
+        ofxUIWidget * w = widget->getEmbeddedWidget(i);
+        if (w != labelignore)
+        {
+            removeWidget(w);
+        }
     }
     widget->clearEmbeddedWidgets();
     
